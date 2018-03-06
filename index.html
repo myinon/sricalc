@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta name="author" content="myinon" />
+		<meta name="description" content="This tool will help generate the code needed to use subresource integrity for your offline files." />
+		<meta name="robots" content="index, follow" />
+		<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no" />
+		<meta name="msapplication-tap-highlight" content="no" />
+		<title>Subresource Integrity Calculator</title>
+		<!-- Icon from https://www.iconfinder.com/icons/1741324/calculator_math_tutor_icon -->
+		<link rel="icon" type="image/x-icon" href="favicon.ico" hreflang="en" />
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro" hreflang="en" />
+		<style type="text/css">
+			*,
+			*::before,
+			*::after {
+				box-sizing: border-box;
+			}
+			::selection {
+				background-color: #222;
+				color: white;
+			}
+			::-moz-selection {
+				background-color: #222;
+				color: white;
+			}
+			:root {
+				--border-size: 0.25rem;
+				--negative-padding: -0.5rem;
+				--padding: 0.5rem;
+			}
+			body {
+				background: #f5f5f5 url("img/asanoha-400px.png") repeat scroll;
+				color: black;
+				font: normal 400 16px/1.5 "Consolas", "Monaco", monospace;
+				margin: var(--padding) 0;
+			}
+			.text-center {
+				text-align: center;
+			}
+			.text-lowercase {
+				text-transform: lowercase;
+			}
+			.no-wrap {
+				white-space: nowrap;
+			}
+			.no-select {
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				-ms-user-select: none;
+				user-select: none;
+			}
+			noscript {
+				flex: 1 1 auto;
+			}
+			.alert {
+				border: 1px solid transparent;
+				border-radius: 4px;
+				margin-bottom: 20px;
+				margin-top: 0;
+				padding: 15px;
+			}
+			.alert-warning {
+				background-color: #fcf8e3;
+				border-color: #faebcc;
+				color: #8a6d3b;
+			}
+			.w-container {
+				align-items: center;
+				background-color: white;
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+				display: flex;
+				flex-flow: column nowrap;
+				justify-content: center;
+				margin: 0 var(--padding);
+				max-width: 700px;
+				min-height: calc(100vh - calc(var(--padding) * 2));
+				padding: 0.9375rem;
+			}
+			.w-page-header,
+			.w-page-footer {
+				flex: none;
+				width: 100%;
+			}
+			.w-page-header {
+				border-bottom: 1px solid #ccc;
+				margin: 0.5625rem 0 1.125rem;
+				padding-bottom: var(--padding);
+			}
+			.w-title {
+				font-size: 1.8rem;
+				font-variant: small-caps;
+				font-weight: bold;
+				letter-spacing: -0.3px;
+				line-height: 1.1;
+				margin: 0;
+			}
+			.w-body {
+				display: flex;
+				flex: 1 1 100%;
+				flex-flow: column nowrap;
+				height: 100%;
+				width: 100%;
+			}
+			.w-instructions {
+				flex: none;
+				font-family: "Source Sans Pro", sans-serif;
+				font-size: 0.9375rem;
+				margin-bottom: calc(var(--padding) * 3);
+				margin-top: 0;
+			}
+			.w-dropzone {
+				border: var(--border-size) dashed gray;
+				flex: none;
+				font-size: 120%;
+				margin-bottom: calc(var(--padding) * 3);
+				padding: calc(var(--padding) * 2);
+			}
+			.w-dropzone.over {
+				background-color: #dedede;
+			}
+			.w-results {
+				display: none;
+			}
+			.no-js .w-dropzone,
+			.no-js .w-results {
+				display: none !important;
+			}
+			.has-results {
+				border: var(--border-size) solid black;
+				display: block;
+				flex: 1 1 0;
+				height: 100%;
+				min-height: 150px;
+				overflow: auto;
+			}
+			.w-list {
+				list-style-type: none;
+				margin: 0;
+				padding: var(--padding);
+			}
+			.w-item {
+				display: flex;
+				flex-wrap: wrap;
+				margin-left: var(--negative-padding);
+				margin-right: var(--negative-padding);
+				padding-left: var(--padding);
+				padding-right: var(--padding);
+			}
+			.w-item:not(:last-child) {
+				border-bottom: var(--border-size) solid black;
+				margin-bottom: var(--padding);
+				padding-bottom: var(--padding);
+			}
+			.w-item-heading {
+				border-bottom: 1px solid #ccc;
+				flex: 1 1 100%;
+				margin-top: 0;
+				padding-bottom: 0.25em;
+			}
+			.w-item span {
+				flex: none;
+				font-family: "Source Sans Pro", sans-serif;
+				font-size: 0.875rem;
+			}
+			.w-item .sri {
+				flex: 1 1 0;
+				margin-left: calc(var(--padding) * 2);
+				word-break: break-all;
+			}
+			.w-page-footer {
+				color: #454545;
+				font-size: 0.8125rem;
+				line-height: 1;
+				margin-top: 1.125rem;
+			}
+			.w-page-footer p {
+				margin: 0;
+			}
+			.w-page-footer :link {
+				color: darkgreen;
+				text-decoration: none;
+				transition: color 0.3s ease;
+			}
+			.w-page-footer :link:focus {
+				outline: 1px dashed currentColor;
+				outline-offset: 2px;
+			}
+			.w-page-footer :link:focus,
+			.w-page-footer :link:hover {
+				color: darkblue;
+			}
+			.w-page-footer :link:active {
+				color: darkred;
+			}
+			@media (min-width: 530px) {
+				.w-title {
+					font-size: 2rem;
+				}
+			}
+			@media (min-width: 716px) {
+				.w-container {
+					margin-left: auto;
+					margin-right: auto;
+				}
+			}
+		</style>
+		<script type="text/javascript" async>
+		<!--
+			try {
+				document.documentElement.classList.remove("no-js");
+				document.documentElement.classList.add("js");
+			} catch (e) {}
+		//-->
+		</script>
+	</head>
+	<body>
+		<main class="w-container">
+			<header class="w-page-header text-center no-select">
+				<h1 class="w-title">Subresource Integrity Calculator</h1>
+			</header>
+			<article class="w-body">
+				<p class="w-instructions">To use this tool, drag and drop your CSS and JavaScript files in the box with the dashed outline. The page will then generate the code for each of the files in a section below the box. The code will have the label &ldquo;SRI&rdquo; on the left and the code itself will be on the right, starting with the word &ldquo;integrity&rdquo;. Copy this code to your HTML where those files are referenced.</p>
+				<noscript>
+					<p class="alert alert-warning text-center">JavaScript is required to use this page. Please turn on your JavaScript.</p>
+				</noscript>
+				<section class="w-dropzone text-center">
+					<p>Drag &rsquo;n&rsquo; Drop Your Files Here!</p>
+				</section>
+				<section class="w-results">
+					<output><ul class="w-list"></ul></output>
+				</section>
+			</article>
+			<footer class="w-page-footer text-center text-lowercase no-select">
+				<p>myinon.github.io/sricalc <span class="no-wrap">• Copyright &copy; 2018 myinon</span> <span class="no-wrap">• <a href="https://www.toptal.com/designers/subtlepatterns/japanese-asanoha/" target="_blank">background by Olga Libby</a></span></p>
+			</footer>
+		</main>
+		<script type="text/javascript" async>
+		<!--
+			(function () {
+				"use strict";
+
+				let zone = document.querySelector(".w-dropzone"),
+					results = document.querySelector(".w-results"),
+					list = document.querySelector(".w-list"),
+					filesRead = 0,
+					totalFiles = 0;
+
+				if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
+					window.crypto.subtle = window.crypto.webkitSubtle;
+				}
+
+				zone.addEventListener("dragover", (e) => {
+					if (e.preventDefault) {
+						e.preventDefault();
+					}
+
+					e.dataTransfer.dropEffect = "copy";
+					zone.classList.add("over");
+				}, false);
+
+				zone.addEventListener("dragleave", (e) => {
+					zone.classList.remove("over");
+				}, { passive: true });
+
+				zone.addEventListener("dragend", (e) => {
+					zone.classList.remove("over");
+				}, { passive: true });
+
+				function toBase64(buffer) {
+					return btoa(new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), ""));
+				}
+
+				async function calculateHashes(frag, e) {
+					let sha256 = crypto.subtle.digest("SHA-256", e.target.result),
+						sha384 = crypto.subtle.digest("SHA-384", e.target.result),
+						sha512 = crypto.subtle.digest("SHA-512", e.target.result),
+						hash256 = await sha256,
+						hash384 = await sha384,
+						hash512 = await sha512,
+						str256 = toBase64(hash256),
+						str384 = toBase64(hash384),
+						str512 = toBase64(hash512),
+						li = document.createElement("li");
+
+					li.insertAdjacentHTML("beforeend", `<h2 class="w-item-heading text-center">${this.name}</h2>`);
+					li.insertAdjacentHTML("beforeend", `<span>SRI</span><span class="sri">integrity="sha256-${str256} sha384-${str384} sha512-${str512}" crossorigin="anonymous"`);
+
+					li.classList.add("w-item");
+					frag.appendChild(li);
+
+					if ((++filesRead) === totalFiles) {
+						list.appendChild(frag);
+						results.classList.add("has-results");
+						zone.classList.remove("over");
+					}
+				}
+
+				zone.addEventListener("drop", (e) => {
+					let files = e.dataTransfer.files,
+						reader = null,
+						docFrag = document.createDocumentFragment();
+
+					e.stopPropagation();
+					e.preventDefault();
+
+					filesRead = 0;
+					totalFiles = files.length;
+					Array.from(files).forEach((file) => {
+						reader = new FileReader();
+						reader.onload = calculateHashes.bind(file, docFrag);
+						reader.readAsArrayBuffer(file);
+					});
+				}, false);
+			}());
+		//-->
+		</script>
+	</body>
+</html>

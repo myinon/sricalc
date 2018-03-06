@@ -1,0 +1,4 @@
+*.html text eol=crlf
+*.md   text eol=crlf
+*.png  binary
+*.ico  binary
