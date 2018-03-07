@@ -28,6 +28,7 @@
 			}
 			:root {
 				--border-size: 0.25rem;
+				--progress: rgba(178, 34, 34, 0.9);
 				--negative-padding: -0.5rem;
 				--padding: 0.5rem;
 			}
@@ -66,6 +67,30 @@
 				background-color: #fcf8e3;
 				border-color: #faebcc;
 				color: #8a6d3b;
+			}
+			.w-progress {
+				-webkit-appearance: none;
+				border: 0 none;
+				color: var(--progress);
+				display: block;
+				height: 3px;
+				left: 0;
+				opacity: 1;
+				position: fixed;
+				right: 0;
+				top: 0;
+				transition: opacity 0.6s ease;
+				width: 100%;
+				z-index: 999;
+			}
+			.w-progress::-webkit-progress-bar {
+				background-color: transparent;
+			}
+			.w-progress::-webkit-progress-value {
+				background-color: var(--progress);
+			}
+			.w-progress::-moz-progress-bar {
+				background-color: var(--progress);
 			}
 			.w-container {
 				align-items: center;
@@ -159,6 +184,7 @@
 				flex: 1 1 100%;
 				margin-top: 0;
 				padding-bottom: 0.25em;
+				word-break: break-all;
 			}
 			.w-item span {
 				flex: none;
@@ -217,6 +243,7 @@
 		</script>
 	</head>
 	<body>
+		<progress class="w-progress" value="0" max="100"></progress>
 		<main class="w-container">
 			<header class="w-page-header text-center no-select">
 				<h1 class="w-title">Subresource Integrity Calculator</h1>
@@ -245,8 +272,11 @@
 				let zone = document.querySelector(".w-dropzone"),
 					results = document.querySelector(".w-results"),
 					list = document.querySelector(".w-list"),
+					progress = document.querySelector(".w-progress"),
 					filesRead = 0,
-					totalFiles = 0;
+					totalFiles = 0,
+					lengthRead = 0,
+					totalLength = 0;
 
 				if (window.crypto && !window.crypto.subtle && window.crypto.webkitSubtle) {
 					window.crypto.subtle = window.crypto.webkitSubtle;
@@ -257,7 +287,7 @@
 						e.preventDefault();
 					}
 
-					e.dataTransfer.dropEffect = "copy";
+					e.dataTransfer.dropEffect = (filesRead !== totalFiles) ? "none" : "copy";
 					zone.classList.add("over");
 				}, false);
 
@@ -283,7 +313,8 @@
 						str256 = toBase64(hash256),
 						str384 = toBase64(hash384),
 						str512 = toBase64(hash512),
-						li = document.createElement("li");
+						li = document.createElement("li"),
+						rafID = 0;
 
 					li.insertAdjacentHTML("beforeend", `<h2 class="w-item-heading text-center">${this.name}</h2>`);
 					li.insertAdjacentHTML("beforeend", `<span>SRI</span><span class="sri">integrity="sha256-${str256} sha384-${str384} sha512-${str512}" crossorigin="anonymous"`);
@@ -294,25 +325,56 @@
 					if ((++filesRead) === totalFiles) {
 						list.appendChild(frag);
 						results.classList.add("has-results");
-						zone.classList.remove("over");
+						rafID = requestAnimationFrame((timeStamp) => {
+							progress.style.opacity = "0";
+							cancelAnimationFrame(rafID);
+						});
 					}
 				}
 
 				zone.addEventListener("drop", (e) => {
 					let files = e.dataTransfer.files,
 						reader = null,
-						docFrag = document.createDocumentFragment();
+						docFrag = document.createDocumentFragment(),
+						rafID = 0;
 
 					e.stopPropagation();
 					e.preventDefault();
 
+					if (filesRead !== totalFiles) {
+						return false;
+					}
+
 					filesRead = 0;
 					totalFiles = files.length;
+					lengthRead = 0;
+					totalLength = Array.from(files).reduce((length, file) => length + file.size, 0);
+
+					rafID = requestAnimationFrame((timeStamp) => {
+						progress.value = 0;
+						progress.style.opacity = "1";
+						cancelAnimationFrame(rafID);
+					});
+
 					Array.from(files).forEach((file) => {
 						reader = new FileReader();
 						reader.onload = calculateHashes.bind(file, docFrag);
+						reader.onprogress = (function () {
+							let read = 0,
+								rafID = 0;
+							return (e) => {
+								lengthRead += (e.loaded - read);
+								read = e.loaded;
+								rafID = requestAnimationFrame((timeStamp) => {
+									progress.value = Math.round((lengthRead / totalLength) * 100);
+									cancelAnimationFrame(rafID);
+								});
+							};
+						}());
 						reader.readAsArrayBuffer(file);
 					});
+
+					zone.classList.remove("over");
 				}, false);
 			}());
 		//-->
