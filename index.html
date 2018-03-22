@@ -181,10 +181,56 @@
 			}
 			.w-item-heading {
 				border-bottom: 1px solid #ccc;
+				display: grid;
 				flex: 1 1 100%;
+				grid-column-gap: 15px;
+				grid-template: 1fr / 1fr auto;
 				margin-top: 0;
 				padding-bottom: 0.25em;
 				word-break: break-all;
+			}
+			.w-copy {
+				align-self: center;
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				appearance: none;
+				background-color: transparent;
+				border: 0.0625rem solid #000;
+				color: #000;
+				cursor: pointer;
+				font-size: 0.75rem;
+				overflow: hidden;
+				padding: 0.4em 0.8em;
+				position:  relative;
+				text-align: center;
+				transform: perspective(1px) translateZ(0);
+				transition: color 0.3s ease;
+			}
+			.w-copy::before {
+				background-color: #000;
+				bottom: 0;
+				content: " ";
+				display: block;
+				left: 0;
+				position: absolute;
+				right: 0;
+				top: 0;
+				transform: scale(0);
+				transition: transform 0.3s ease;
+				z-index: -1;
+			}
+			.w-copy:hover {
+				color: #fff;
+			}
+			.w-copy:focus {
+				outline: 0.0625rem dashed #b22222;
+				outline-offset: 0.125rem;
+			}
+			.w-copy::-moz-focus-inner {
+				border: 0 none;
+			}
+			.w-copy:hover::before {
+				transform: scale(1.5);
 			}
 			.w-item span {
 				flex: none;
@@ -316,7 +362,7 @@
 						li = document.createElement("li"),
 						rafID = 0;
 
-					li.insertAdjacentHTML("beforeend", `<h2 class="w-item-heading text-center">${this.name}</h2>`);
+					li.insertAdjacentHTML("beforeend", `<h2 class="w-item-heading text-center">${this.name}<button class="w-copy text-center">Copy</button></h2>`);
 					li.insertAdjacentHTML("beforeend", `<span>SRI</span><span class="sri">integrity="sha256-${str256} sha384-${str384} sha512-${str512}" crossorigin="anonymous"`);
 
 					li.classList.add("w-item");
@@ -375,6 +421,54 @@
 					});
 
 					zone.classList.remove("over");
+				}, false);
+
+				function cancelDefault(e) {
+					if (typeof(e) !== "undefined" && e !== null) {
+						if (e.preventDefault) {
+							e.preventDefault();
+						}
+						if (e.stopPropagation) {
+							e.stopPropagation();
+						}
+						e.cancelBubble = true;
+						e.returnValue = false;
+					}
+				}
+				function getTarget(e) {
+					var targ;
+					if (typeof(e) !== "undefined" && e !== null) {
+						if (e.target) {
+							targ = e.target;
+						} else if (e.srcElement) {
+							targ = e.srcElement;
+						}
+						if (targ !== null && targ.nodeType === 3) { // defeat Safari bug
+							targ = targ.parentNode;
+						}
+					}
+					return targ;
+				}
+
+				function getSelection(sri) {
+					if (typeof (sri) !== "undefined" && sri !== null && typeof (sri.nodeName) === "string" && sri.nodeName.match(/^SPAN$/i)) {
+						var doc = sri.ownerDocument,
+							range = doc.createRange(),
+							selection = doc.defaultView.getSelection();
+						range.selectNode(sri);
+						selection.removeAllRanges();
+						selection.addRange(range);
+						if (doc.queryCommandSupported("copy")) {
+							doc.execCommand("copy");
+						}
+					}
+				}
+
+				results.addEventListener("click", (e) => {
+					let btn = getTarget(e);
+					if (btn.classList.contains("w-copy")) {
+						getSelection(btn.closest(".w-item").querySelector(".sri"));
+					}
 				}, false);
 			}());
 		//-->
