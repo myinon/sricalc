@@ -267,6 +267,27 @@
 			.w-page-footer :link:active {
 				color: darkred;
 			}
+			.toast {
+				background-color: #222;
+				border: 0.0625em solid #333;
+				border-radius: 0.25em;
+				bottom: 20px;
+				box-shadow: 0 3px 5px rgba(0, 0, 0, 0.5);
+				color: #fff;
+				font-family: "Source Sans Pro", sans-serif;
+				font-size: 0.875rem;
+				left: 30px;
+				opacity: 0;
+				padding: 0.875em 1.375em;
+				position: fixed;
+				transform: translateY(150%);
+				transition: opacity 0.3s ease, transform 0.3s ease;
+				z-index: 99;
+			}
+			.toast.active {
+				opacity: 1;
+				transform: translateY(0);
+			}
 			@media (min-width: 530px) {
 				.w-title {
 					font-size: 2rem;
@@ -309,6 +330,7 @@
 			<footer class="w-page-footer text-center text-lowercase no-select">
 				<p>myinon.github.io/sricalc <span class="no-wrap">• Copyright &copy; 2018 myinon</span> <span class="no-wrap">• <a href="https://www.toptal.com/designers/subtlepatterns/japanese-asanoha/" target="_blank">background by Olga Libby</a></span></p>
 			</footer>
+			<div class="toast"></div>
 		</main>
 		<script type="text/javascript" async>
 		<!--
@@ -319,6 +341,7 @@
 					results = document.querySelector(".w-results"),
 					list = document.querySelector(".w-list"),
 					progress = document.querySelector(".w-progress"),
+					toast = document.querySelector(".toast"),
 					filesRead = 0,
 					totalFiles = 0,
 					lengthRead = 0,
@@ -450,6 +473,36 @@
 					return targ;
 				}
 
+				function activateToast(msg = "Loading&hellip;") {
+					let rafID = -1;
+
+					toast.innerHTML = msg;
+					rafID = window.requestAnimationFrame((ts) => {
+						toast.classList.add("active");
+						window.cancelAnimationFrame(rafID);
+					});
+				}
+
+				function deactivateToast(sec = 5) {
+					if (sec < 0) {
+						sec = 0;
+					}
+
+					let millisecond = sec * 1000,
+						startTime = performance.now(),
+						rafID = -1,
+						toastTimeout = (ts) => {
+							if ((ts - startTime) >= millisecond) {
+								toast.classList.remove("active");
+								window.cancelAnimationFrame(rafID);
+							} else {
+								window.requestAnimationFrame(toastTimeout);
+							}
+						};
+
+					window.requestAnimationFrame(toastTimeout);
+				}
+
 				function getSelection(sri) {
 					if (typeof (sri) !== "undefined" && sri !== null && typeof (sri.nodeName) === "string" && sri.nodeName.match(/^SPAN$/i)) {
 						var doc = sri.ownerDocument,
@@ -460,6 +513,8 @@
 						selection.addRange(range);
 						if (doc.queryCommandSupported("copy")) {
 							doc.execCommand("copy");
+							activateToast("Copied to clipboard");
+							deactivateToast(3);
 						}
 					}
 				}
